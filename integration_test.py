@@ -2,20 +2,11 @@
 串口通信系统集成测试
 整合测试：串口驱动 + 环形缓冲区 + 数据结构
 """
-
-import time
-import threading
 from UartSrc.simple_uart import SimpleUart, scan_available_ports
-from DataParser.circular_buffer import CircularBuffer, BufferType
-import serial
-import serial.tools.list_ports
-import threading
-import time
-from typing import Optional, Callable, List
 from DataParser.circular_buffer import CircularBuffer, BufferType
 from DataStructures.data_frame import DataFrame, ChannelData, DataFramePublisher, DataFrameFileWriter
 from DataStructures.command_frame import CommandDriver
-
+import time
 # 扫描并返回需要打开的串口
 """测试串口驱动"""
 print("=== 串口驱动测试 ===")
@@ -43,7 +34,14 @@ if uart.open():
     # write_buffer = CircularBuffer(buffer_type=BufferType.LIST)
     print("\n串口通信控制台")
     print("输入要发送的数据（回车发送），输入 'quit' 退出：")
-    cmd_frame =  CommandDriver.create_set_uart_freq_command(3);
+    cmd_frame =  CommandDriver.create_set_uart_freq_command(3)
+    byte_data = cmd_frame.to_bytes()
+    uart.send(byte_data)
+    print(f"\n批量写入指令字节流: {byte_data.hex()}")
+    print(f"指令长度: {len(byte_data)} 字节")
+
+    time.sleep(0.001)  # 短暂休眠
+    cmd_frame =  CommandDriver.create_set_work_mode_command(0x0000)
     byte_data = cmd_frame.to_bytes()
     uart.send(byte_data)
     print(f"\n批量写入指令字节流: {byte_data.hex()}")
