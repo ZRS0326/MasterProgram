@@ -10,7 +10,7 @@ import threading
 import time
 from typing import Optional, Callable, List
 from DataParser.circular_buffer import CircularBuffer, BufferType
-from DataStructures.data_frame import DataFrame, ChannelData, DataFramePublisher
+from DataStructures.data_frame import DataFrame, ChannelData, DataFramePublisher, DataFrameFileWriter
 
 
 class SimpleUart:
@@ -550,11 +550,11 @@ def test_simple_uart():
     if uart.open():
         print(f"串口状态: {'打开' if uart.is_open() else '关闭'}")
         display_buffer = CircularBuffer(buffer_type=BufferType.LIST)
+        # file_writer = DataFrameFileWriter(output_dir="./output", file_type="csv")
         # write_buffer = CircularBuffer(buffer_type=BufferType.LIST)
 
         # 订阅数据帧
         DataFramePublisher.subscribe(display_buffer)
-        # DataFrame.subscribe(write_buffer)
         
         # 开启一个线程，监控display_buffer，有数据就读取出来并打印
         import threading
