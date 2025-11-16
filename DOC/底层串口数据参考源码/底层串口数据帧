@@ -1,0 +1,32 @@
+数据类帧：
+
+			// 数据帧逻辑
+		memset(&data_frame_upload[2],0,37); //清空数据位
+		//0-1 		帧头0xA9 0xB5						1*2
+		//2-9 		4ch adc 								4*2
+		//10-25 	8ch sdadc 							8*2
+		//26-33		8ch autoadj 						8*1
+		//34-37		2ch frame(master/slave)	2*2
+		//38			1ch lidar state					1*1
+		//39			帧尾0x33								1*1
+		memcpy(&data_frame_upload[2],adc_frame,sizeof(adc_frame));	//adc 4*2 = 8Bytes
+		memcpy(&data_frame_upload[10],sdadc_frame,sizeof(sdadc_frame));//sdadc 8*2 = 16Bytes
+		memcpy(&data_frame_upload[26],autoadj,sizeof(autoadj));//autoadj 8*1 = 8Bytes
+		memcpy(&data_frame_upload[34],&data_frame_master,sizeof(data_frame_master));//2Bytes
+		memcpy(&data_frame_upload[36],&data_frame_pos,sizeof(data_frame_pos));//2Bytes
+		data_frame_upload[38]=index_lidar;//1Bytes
+		// 增益、帧序号
+		HAL_UART_Transmit_IT(&huart2,data_frame_upload,sizeof(data_frame_upload));
+
+
+其他类帧：
+#define FASHION_FRAME_HEADER_RESP_1   0x05
+#define FASHION_FRAME_HEADER_RESP_2   0x1C
+header: 固定为 0x05 0x1C, 用于标识指令封包的起始位置。
+cmd_id: 本次封包的控制指令。
+length: 表示后续数据内容 (content) 的字节数, 用于解析封包。
+
+content: 根据命令字不同, 返回执行结果, 或相应数据 (如当前角度、电压、温度、版本、回读参数等) 。
+
+checksum: 所有字节累加求和后取模 256 的结果, 用于校验数据完整性。
+https://wiki.fashionrobo.com/uartbasic/uart_rs485_protocols/#3
