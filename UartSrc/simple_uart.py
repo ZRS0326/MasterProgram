@@ -268,26 +268,22 @@ class SimpleUart:
             
             # 创建数据帧对象
             data_frame = DataFrame()
-            
-            # 解析ADC数据 (4通道，每通道2字节)
-            for i in range(4):
-                adc_offset = i * 2  # 从0开始，每通道2字节
-                data_frame.channels[i].adc = int.from_bytes(frame_data[adc_offset:adc_offset+2], byteorder='little', signed=True)
-            
-            # 解析SDADC数据 (8通道，每通道2字节)
-            # SDADC0: 通道0-3 (字节8-15)
-            # SDADC1: 通道4-7 (字节16-23)
-            sdadc_base_offset = 8  # ADC数据结束位置
-            
-            for i in range(4):
-                # SDADC0值 (前4个通道)
-                sdadc0_offset = sdadc_base_offset + i * 2
-                data_frame.channels[i].sdadc0 = int.from_bytes(frame_data[sdadc0_offset:sdadc0_offset+2], byteorder='little', signed=True)
-                
-                # SDADC1值 (后4个通道，但只取前4个对应通道)
-                sdadc1_offset = sdadc_base_offset + 8 + i * 2  # 跳过前4个SDADC0
-                data_frame.channels[i].sdadc1 = int.from_bytes(frame_data[sdadc1_offset:sdadc1_offset+2], byteorder='little', signed=True)
-            
+
+            # adc[2134]
+            data_frame.channels[1].adc = int.from_bytes(frame_data[0:2], byteorder='little', signed=True)
+            data_frame.channels[0].adc = int.from_bytes(frame_data[2:4], byteorder='little', signed=True)
+            data_frame.channels[2].adc = int.from_bytes(frame_data[4:6], byteorder='little', signed=True)
+            data_frame.channels[3].adc = int.from_bytes(frame_data[6:8], byteorder='little', signed=True)
+            # sdadc[CH1A,CH2A,CH3A,CH1B,CH2B,CH4A,CH3B,CH4B]
+            data_frame.channels[0].sdadc0 = int.from_bytes(frame_data[8:10], byteorder='little', signed=True)
+            data_frame.channels[0].sdadc1 = int.from_bytes(frame_data[14:16], byteorder='little', signed=True)
+            data_frame.channels[1].sdadc0 = int.from_bytes(frame_data[10:12], byteorder='little', signed=True)
+            data_frame.channels[1].sdadc1 = int.from_bytes(frame_data[16:18], byteorder='little', signed=True)
+            data_frame.channels[2].sdadc0 = int.from_bytes(frame_data[12:14], byteorder='little', signed=True)
+            data_frame.channels[2].sdadc1 = int.from_bytes(frame_data[20:22], byteorder='little', signed=True)
+            data_frame.channels[3].sdadc0 = int.from_bytes(frame_data[18:20], byteorder='little', signed=True)
+            data_frame.channels[3].sdadc1 = int.from_bytes(frame_data[22:24], byteorder='little', signed=True)
+
             # 解析ADJ数据 (8通道，每通道1字节)
             # ADJ0: 通道0-3 (字节24-27)
             # ADJ1: 通道4-7 (字节28-31)
@@ -302,7 +298,7 @@ class SimpleUart:
             
             # Current值暂时设为0，因为数据中没有包含
             for i in range(4):
-                data_frame.channels[i].current = 0.0
+                data_frame.channels[i].current = (1000 * (data_frame.channels[i].sdadc0 + 32767) * 3300 / 65535)/((256 - data_frame.channels[i].adj0) * 3.92)
             
             # 解析主帧数据 (2字节)
             data_frame.master_frame = int.from_bytes(frame_data[32:34], byteorder='little')
